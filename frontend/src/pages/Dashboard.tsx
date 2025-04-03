@@ -1,131 +1,212 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "@/contexts/UserContext";
-import { useToast } from "@/components/ui/use-toast";
-import UniversityCard from "@/components/UniversityCard";
-import AddUniversityModal from "@/components/AddUniversityModal";
+import { useState } from "react";
+import { 
+  Briefcase, 
+  Calendar, 
+  CheckCircle, 
+  Building2, 
+  Search, 
+  Filter, 
+  MoreVertical 
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow 
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
-// Mock data for university plans
-const INITIAL_PLANS = [
-  {
-    id: "1",
-    name: "Capy University",
-    location: "Capybara Hills, CA",
-    programs: ["Computer Science", "Wildlife Biology"],
-    cost: "$15,000/year",
-    notes: "Great capybara-friendly campus with rivers nearby."
-  },
-  {
-    id: "2",
-    name: "Waterfront College",
-    location: "Riverside, FL",
-    programs: ["Marine Biology", "Environmental Studies"],
-    cost: "$18,500/year",
-    notes: "Amazing swimming facilities and wetland research opportunities."
-  }
-];
+type Status = "Interview" | "Applied" | "Rejected" | "Offer";
+
+interface Application {
+  id: number;
+  company: string;
+  position: string;
+  status: Status;
+  dateApplied: string;
+  nextStep: string;
+  salaryRange: string;
+}
 
 const Dashboard = () => {
-  const { user, logout } = useUser();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [plans, setPlans] = useState(() => {
-    const savedPlans = localStorage.getItem('capy-plans');
-    return savedPlans ? JSON.parse(savedPlans) : INITIAL_PLANS;
-  });
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const applications: Application[] = [
+    {
+      id: 1,
+      company: "CapyTech Solutions",
+      position: "Senior Frontend Developer",
+      status: "Interview",
+      dateApplied: "2024-02-20",
+      nextStep: "Technical Interview - Feb 25",
+      salaryRange: "$120k - $160k"
+    },
+    {
+      id: 2,
+      company: "Capybara Designs",
+      position: "Product Designer",
+      status: "Applied",
+      dateApplied: "2024-02-18",
+      nextStep: "-",
+      salaryRange: "$90k - $120k"
+    },
+    {
+      id: 3,
+      company: "Capy Industries",
+      position: "Backend Engineer",
+      status: "Rejected",
+      dateApplied: "2024-02-15",
+      nextStep: "-", 
+      salaryRange: "$140k - $180k"
+    },
+    {
+      id: 4,
+      company: "CapyCloud",
+      position: "DevOps Engineer",
+      status: "Offer",
+      dateApplied: "2024-02-10",
+      nextStep: "Review Offer by Feb 24",
+      salaryRange: "$130k - $170k"
     }
-  }, [user, navigate]);
+  ];
 
-  useEffect(() => {
-    localStorage.setItem('capy-plans', JSON.stringify(plans));
-  }, [plans]);
+  const stats = [
+    { title: "Total Applications", value: 24, icon: <Briefcase className="h-5 w-5 text-white" /> },
+    { title: "Interviews", value: 8, icon: <Calendar className="h-5 w-5 text-white" /> },
+    { title: "Offers", value: 2, icon: <CheckCircle className="h-5 w-5 text-white" /> },
+    { title: "Companies", value: 15, icon: <Building2 className="h-5 w-5 text-white" /> },
+  ];
 
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged out",
-      description: "See you soon!"
-    });
-    navigate("/");
+  const getStatusBadge = (status: Status) => {
+    switch (status) {
+      case "Interview":
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-yellow-500" />
+            <span className="text-yellow-500">Interview</span>
+          </div>
+        );
+      case "Applied":
+        return (
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-blue-500" />
+            <span className="text-blue-500">Applied</span>
+          </div>
+        );
+      case "Rejected":
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-red-500" />
+            <span className="text-red-500">Rejected</span>
+          </div>
+        );
+      case "Offer":
+        return (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            <span className="text-green-500">Offer</span>
+          </div>
+        );
+    }
   };
-
-  const addPlan = (plan: typeof INITIAL_PLANS[0]) => {
-    setPlans([...plans, { ...plan, id: Math.random().toString() }]);
-    setIsModalOpen(false);
-    toast({
-      title: "Plan added!",
-      description: `${plan.name} has been added to your plans.`
-    });
-  };
-
-  const deletePlan = (id: string) => {
-    setPlans(plans.filter(plan => plan.id !== id));
-    toast({
-      title: "Plan removed",
-      description: "The university plan has been removed."
-    });
-  };
-
-  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-capy-purple p-4">
-      <header className="flex justify-between items-center mb-8 p-4 bg-capy-purple bg-opacity-80 rounded-lg pixel-borders">
-        <h1 className="text-xl md:text-2xl font-bold pixel-text">CapyPath Dashboard</h1>
-        <div className="flex gap-4">
-          <span className="pixel-text">Hello, {user.username}!</span>
-          <button 
-            onClick={handleLogout}
-            className="pixel-button text-sm"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-xl font-bold pixel-text">Your University Plans</h2>
-        <button 
-          onClick={() => setIsModalOpen(true)} 
-          className="pixel-button"
-        >
-          Add New Plan
-        </button>
+    <div className="container mx-auto p-4 md:p-6">
+      {/* Header with New Application Button */}
+      <div className="flex justify-end w-full mb-8">
+        <Button className="bg-purple-500 hover:bg-purple-600 text-white rounded-full">
+          + Track New Application
+        </Button>
       </div>
 
-      {plans.length === 0 ? (
-        <div className="text-center p-8 bg-capy-purple bg-opacity-60 rounded-lg pixel-borders">
-          <p className="pixel-text text-lg mb-4">You haven't added any university plans yet!</p>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="pixel-button"
-          >
-            Add Your First Plan
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <UniversityCard 
-              key={plan.id} 
-              plan={plan} 
-              onDelete={() => deletePlan(plan.id)} 
-            />
-          ))}
-        </div>
-      )}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {stats.map((stat, index) => (
+          <div key={index} className="bg-purple-700 rounded-xl shadow-lg p-6 text-white">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-purple-600/50 rounded-lg">
+                {stat.icon}
+              </div>
+              <span className="text-sm font-medium text-purple-200">{stat.title}</span>
+            </div>
+            <p className="text-4xl font-bold">{stat.value}</p>
+          </div>
+        ))}
+      </div>
 
-      <AddUniversityModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onAdd={addPlan} 
-      />
+      {/* Applications Table */}
+      <div className="bg-purple-700 rounded-xl shadow-lg p-6 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4 sm:mb-0">Job Applications</h2>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search applications..."
+                className="pl-10 pr-4 py-2 bg-purple-600/50 border border-purple-500 rounded-lg text-white placeholder-purple-300 w-full focus:outline-none focus:ring-2 focus:ring-purple-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" className="border-purple-500 text-white hover:bg-purple-600 flex items-center gap-2">
+              <Filter size={16} />
+              Filter
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-purple-600">
+                <th className="pb-3 text-purple-300 font-medium">Company</th>
+                <th className="pb-3 text-purple-300 font-medium">Position</th>
+                <th className="pb-3 text-purple-300 font-medium">Status</th>
+                <th className="pb-3 text-purple-300 font-medium">Date Applied</th>
+                <th className="pb-3 text-purple-300 font-medium">Next Step</th>
+                <th className="pb-3 text-purple-300 font-medium">Salary Range</th>
+                <th className="pb-3 text-purple-300 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <tr key={app.id} className="border-b border-purple-600 text-white">
+                  <td className="py-4">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white mr-3">
+                        <Building2 className="h-4 w-4" />
+                      </div>
+                      <span>{app.company}</span>
+                    </div>
+                  </td>
+                  <td className="py-4">{app.position}</td>
+                  <td className="py-4">
+                    {getStatusBadge(app.status)}
+                  </td>
+                  <td className="py-4">{app.dateApplied}</td>
+                  <td className="py-4">{app.nextStep}</td>
+                  <td className="py-4">{app.salaryRange}</td>
+                  <td className="py-4">
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-purple-600">
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
